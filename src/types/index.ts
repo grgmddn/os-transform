@@ -26,26 +26,51 @@ export interface MaxBounds {
   geographic: [[number, number], [number, number]];
 }
 
-export interface Proj4Options {
+interface Proj4OptionsOstn15 {
   nadgrid: string;
   defs: {
-    towgs84: string;
     ostn15: string;
   };
 }
 
-export interface TransformOptions {
-  /**
-   * Transformation type:
-   * # ostn15-cgi - [default] OSTN15 Transformation via Common Gateway Interface (CGI) request to GIQTrans.
-   * # ostn15-gsb - OSTN15 Transformation using Grid Based Datum Adjustments (NTv2 `.gsb` file). Uses proj4js.
-   * # ostn15-tif - OSTN15 Transformation using Grid Based Datum Adjustments (GeoTIFF `.tif` file). Uses proj4js.
-   * # simple-towgs84 - Simple seven-parameter geodetic transformation. Uses proj4js.
-   */
-  type?: 'ostn15-cgi' | 'ostn15-gsb' | 'ostn15-tif' | 'simple-towgs84';
-  gsbPath?: string;
-  tifPath?: string;
-  proj4?: Proj4Options;
-  cgiPath?: string;
+interface Proj4OptionsToWgs84 {
+  defs: {
+    towgs84: string;
+  };
+}
+
+interface TransformOptionsBase {
   maxBounds?: MaxBounds;
 }
+
+interface TransformOptionsCgi extends TransformOptionsBase {
+  mode: 'ostn15-cgi';
+  cgiPath: string;
+}
+
+interface TransformOptionsGsb extends TransformOptionsBase {
+  mode: 'ostn15-gsb';
+  gsbPath: string;
+  proj4: Proj4OptionsOstn15;
+}
+
+interface TransformOptionsTif extends TransformOptionsBase {
+  mode: 'ostn15-tif';
+  geotiff: typeof import('geotiff');
+  tifPath: string;
+  proj4: Proj4OptionsOstn15;
+}
+
+interface TransformOptionsToWgs84 extends TransformOptionsBase {
+  mode: 'simple-towgs84';
+  proj4?: Proj4OptionsToWgs84;
+}
+
+export type TransformOptions =
+  | TransformOptionsCgi
+  | TransformOptionsGsb
+  | TransformOptionsTif
+  | TransformOptionsToWgs84;
+
+/** Union of proj4-based transformation modes. */
+export type Proj4Mode = Exclude<TransformOptions['mode'], 'ostn15-cgi'>;

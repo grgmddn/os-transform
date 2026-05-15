@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { MockAgent, setGlobalDispatcher, Agent } from 'undici';
 import { Transform } from './transform';
-import type { TransformOptions } from './types';
+import type { MaxBounds, TransformOptions } from './types';
 
 const CGI_PATH = 'http://localhost/cgi-bin/giqtrans';
 
@@ -21,44 +21,58 @@ before(() => {
   mockAgent.disableNetConnect();
 });
 
-/**
- * Full options reset before every test. This prevents mutations made in one
- * test (e.g. changing Transform.options.type) from affecting subsequent tests.
- */
-const defaultOptions: Required<TransformOptions> = {
-  type: 'ostn15-cgi',
-  gsbPath: 'resources/OSTN15_NTv2_OSGBtoETRS.gsb',
-  tifPath: 'resources/uk_os_OSTN15_NTv2_OSGBtoETRS.tif',
-  proj4: {
-    nadgrid: 'OSTN15_NTv2_OSGBtoETRS',
-    defs: {
-      towgs84:
-        '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs',
-      ostn15:
-        '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +nadgrids=OSTN15_NTv2_OSGBtoETRS +units=m +no_defs +type=crs'
-    }
-  },
-  cgiPath: CGI_PATH,
-  maxBounds: {
-    projected: [
-      [0.0, 0.0],
-      [699999.9, 1299999.9]
-    ],
-    geographic: [
-      [-8.74, 49.84],
-      [1.96, 60.9]
-    ]
-  }
+const maxBounds: MaxBounds = {
+  projected: [
+    [0.0, 0.0],
+    [699999.9, 1299999.9]
+  ],
+  geographic: [
+    [-8.74, 49.84],
+    [1.96, 60.9]
+  ]
 };
 
-beforeEach(() => {
-  Transform.options = { ...defaultOptions };
+const cgiOptions: TransformOptions = {
+  mode: 'ostn15-cgi',
+  cgiPath: CGI_PATH,
+  maxBounds
+};
+
+const towgs84Options: TransformOptions = {
+  mode: 'simple-towgs84',
+  maxBounds
+};
+
+/**
+ * Full options reset before every test via configure(). This prevents state
+ * from one test affecting subsequent tests.
+ */
+beforeEach(async () => {
+  await Transform.configure(cgiOptions);
 });
 
 /* Close the mock agent and restore the real dispatcher after all tests have run. */
 after(async () => {
   await mockAgent.close();
   setGlobalDispatcher(new Agent());
+});
+
+describe('Transform.configure', () => {
+  it('throws if toLatLng is called before configure()', () => {
+    Transform.options = null;
+    assert.throws(
+      () => Transform.toLatLng({ ea: 337297, no: 503695 }),
+      /Transform.configure\(\) must be called before use/
+    );
+  });
+
+  it('throws if fromLatLng is called before configure()', () => {
+    Transform.options = null;
+    assert.throws(
+      () => Transform.fromLatLng({ lat: 54.42481, lng: -2.9679374 }),
+      /Transform.configure\(\) must be called before use/
+    );
+  });
 });
 
 describe('Transform.toLatLng', () => {
@@ -83,8 +97,8 @@ describe('Transform.toLatLng', () => {
     assert.ok('lng' in result);
   });
 
-  it('returns a LatLng via Proj4js when type is simple-towgs84', () => {
-    Transform.options.type = 'simple-towgs84';
+  it('returns a LatLng via Proj4js when type is simple-towgs84', async () => {
+    await Transform.configure(towgs84Options);
     const result = Transform.toLatLng({ ea: 337297, no: 503695 });
     assert.ok('lat' in (result as object));
     assert.ok('lng' in (result as object));
@@ -113,8 +127,8 @@ describe('Transform.fromLatLng', () => {
     assert.ok('no' in result);
   });
 
-  it('returns an EastingNorthing via Proj4js when type is simple-towgs84', () => {
-    Transform.options.type = 'simple-towgs84';
+  it('returns an EastingNorthing via Proj4js when type is simple-towgs84', async () => {
+    await Transform.configure(towgs84Options);
     const result = Transform.fromLatLng({ lat: 54.42481, lng: -2.9679374 });
     assert.ok('ea' in (result as object));
     assert.ok('no' in (result as object));

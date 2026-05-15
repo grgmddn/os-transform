@@ -8,5 +8,5 @@ export type {
   BoundsResult,
   TransformOptions,
   MaxBounds,
-  Proj4Options
+  Proj4Mode
 } from './types';

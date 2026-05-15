@@ -7,7 +7,7 @@
     "dev:cgi": "parcel ./geojson-extent-ostn15-cgi.html",
     "dev:gsb": "parcel ./geojson-extent-ostn15-gsb.html",
     "dev:simple": "parcel ./geojson-extent-simple-towgs84.html",
-    "dev:test": "parcel ./test.html",
+    "dev:all": "parcel ./all.html",
     "dev:tif": "parcel ./geojson-extent-ostn15-tif.html",
     "format": "prettier --write \"*.html\" \"src/**/*.ts\"",
     "lint": "eslint src",

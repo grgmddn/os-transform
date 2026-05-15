@@ -1,12 +1,20 @@
 import * as d3 from 'd3';
 import * as turf from '@turf/turf';
-import proj4 from 'proj4';
-import { Transform } from '@grgmddn/os-transform';
+import { Transform, TransformOptions } from '@grgmddn/os-transform';
 
 import type { FeatureCollection, Feature } from 'geojson';
 
-Transform.options.type = 'ostn15-gsb';
-Transform.options.gsbPath = 'resources/OSTN15_NTv2_OSGBtoETRS.gsb';
+const ostn15Def =
+  '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +nadgrids=OSTN15_NTv2_OSGBtoETRS +units=m +no_defs +type=crs';
+
+const options: TransformOptions = {
+  mode: 'ostn15-gsb',
+  gsbPath: 'resources/OSTN15_NTv2_OSGBtoETRS.gsb',
+  proj4: {
+    nadgrid: 'OSTN15_NTv2_OSGBtoETRS',
+    defs: { ostn15: ostn15Def }
+  }
+};
 
 const roundUp = function (num: number | string, precision: number = 1000): number {
   return Math.ceil(parseFloat(num as string) / precision) * precision;
@@ -26,7 +34,7 @@ function rewind(geo: FeatureCollection): FeatureCollection {
   return fixedGeoJSON;
 }
 
-d3.json('boundary.geojson').then((data: unknown) => {
+d3.json('boundary.geojson').then(async (data: unknown) => {
   /* Cast the response as 'FeatureCollection'. */
   let geojson = data as FeatureCollection;
 
@@ -60,6 +68,15 @@ d3.json('boundary.geojson').then((data: unknown) => {
     .attr('fill', 'steelblue')
     .attr('stroke', 'white');
 
+  /**
+   * Configure the Transform module:
+   * - sets the mode to 'ostn15-gsb'
+   * - fetches the GSB file from options.gsbPath
+   * - registers EPSG:27700 definition with proj4
+   * - passes the GSB as an ArrayBuffer to proj4.nadgrid
+   */
+  await Transform.configure(options);
+
   const element = <HTMLPreElement>document.querySelector('#geojson pre');
 
   element.innerText = `File: boundary.geojson (City of Southampton)\n\n${JSON.stringify(geojson, null, 2)}`;
@@ -68,16 +85,6 @@ d3.json('boundary.geojson').then((data: unknown) => {
 
   if (button) {
     button.addEventListener('click', async function () {
-      const response = await fetch(Transform.options.gsbPath);
-      const arrayBuffer = await response.arrayBuffer();
-
-      proj4.nadgrid(Transform.options.proj4.nadgrid, arrayBuffer);
-
-      /**
-       * The os-transform module configures proj4 mode.
-       * proj4.defs('EPSG:27700', Transform.options.proj4.defs.ostn15);
-       */
-
       const sw = await Transform.fromLatLng({
         lat: geojson.bbox![1],
         lng: geojson.bbox![0]
@@ -106,7 +113,7 @@ d3.json('boundary.geojson').then((data: unknown) => {
         }
       }
 
-      const pre = <HTMLPreElement>document.querySelector(`#${Transform.options.type} pre`);
+      const pre = <HTMLPreElement>document.querySelector(`#${options.mode} pre`);
       pre.innerText = `KM Grid References (for BBOX Extent):\n${JSON.stringify(arrGridRef)}`;
       pre.className = 'msg';
     });

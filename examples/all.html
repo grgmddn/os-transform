@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OS Transform</title>
+    <style>
+      span {
+        display: inline-block;
+        margin: 0 4px;
+      }
+      code {
+        background-color: #f5f5f5;
+        padding: 2px 4px;
+      }
+      pre.msg {
+        background-color: #f5f5f5;
+        padding: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>OS Transform</h2>
+    <div id="ostn15-cgi">
+      <button>Run</button>
+      <span>OSTN15 Transformation via Common Gateway Interface (CGI) request to GIQTrans</span>
+      <pre></pre>
+    </div>
+    <div id="ostn15-gsb">
+      <button>Run</button>
+      <span
+        >OSTN15 Transformation using Grid Based Datum Adjustments (NTv2
+        <code>.gsb</code> file)</span
+      >
+      <pre></pre>
+    </div>
+    <div id="ostn15-tif">
+      <button>Run</button>
+      <span
+        >OSTN15 Transformation using Grid Based Datum Adjustments (GeoTIFF
+        <code>.tif</code> file)</span
+      >
+      <pre></pre>
+    </div>
+    <div id="simple-towgs84">
+      <button>Run</button>
+      <span>Simple seven-parameter geodetic transformation</span>
+      <pre></pre>
+    </div>
+    <script type="module" src="src/all.ts"></script>
+  </body>
+</html>

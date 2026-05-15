@@ -1,5 +1,5 @@
 import type { EastingNorthing, LatLng, BoundsResult, MaxBounds } from '../types';
-import { defaultOptions } from '../configs';
+import { defaultMaxBounds } from '../configs';
 
 /**
  * Test whether coordinates are within the permitted bounds.
@@ -8,7 +8,7 @@ import { defaultOptions } from '../configs';
  */
 export function checkBounds(
   coordinates: EastingNorthing | LatLng,
-  maxBounds: MaxBounds = defaultOptions.maxBounds
+  maxBounds: MaxBounds = defaultMaxBounds
 ): BoundsResult {
   let isValid = true;
 

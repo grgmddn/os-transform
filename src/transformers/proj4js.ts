@@ -1,4 +1,8 @@
-import type { EastingNorthing, LatLng, Proj4Options } from '../types';
+import type { EastingNorthing, LatLng, TransformOptions } from '../types';
+
+import { defaultTowgs84Def } from '../configs';
+import { registerGsb as registerGsbMode } from './proj4js.gsb';
+import { registerTif as registerTifMode } from './proj4js.tif';
 
 /**
  * proj4 is an optional peer dependency. We import it directly here so that
@@ -9,6 +13,29 @@ import type { EastingNorthing, LatLng, Proj4Options } from '../types';
 import proj4 from 'proj4';
 
 /**
+ * Register the EPSG:27700 projection definition with proj4 and perform any
+ * mode-specific setup (e.g. loading a .gsb or .tif file).
+ * Called once from Transform.configure() when a proj4-based mode is selected.
+ *
+ * @param options - The TransformOptions resolved from Transform.configure().
+ */
+export async function register(options: TransformOptions): Promise<void> {
+  switch (options.mode) {
+    case 'ostn15-gsb':
+      await registerGsbMode(options);
+      break;
+
+    case 'ostn15-tif':
+      await registerTifMode(options);
+      break;
+
+    case 'simple-towgs84':
+      proj4.defs('EPSG:27700', options.proj4?.defs.towgs84 ?? defaultTowgs84Def);
+      break;
+  }
+}
+
+/**
  * Return latlng from an input easting + northing via Proj4js.
  *
  * @param coordinates - The easting and northing coordinates to convert, expressed in metres relative to the coordinate reference system defined by `defKey`.
@@ -17,13 +44,7 @@ import proj4 from 'proj4';
  * @param defKey - The key within `proj4Options.defs` that identifies the projection definition string to use for the conversion (e.g. `'EPSG:27700'`).
  * @returns A `LatLng` object containing the converted latitude and longitude, rounded to the specified number of decimal places.
  */
-export function toLatLng(
-  coordinates: EastingNorthing,
-  decimals: number,
-  proj4Options: Proj4Options,
-  defKey: keyof Proj4Options['defs']
-): LatLng {
-  proj4.defs('EPSG:27700', proj4Options.defs[defKey]);
+export function toLatLng(coordinates: EastingNorthing, decimals: number): LatLng {
   const point = proj4('EPSG:27700', 'EPSG:4326', [coordinates.ea, coordinates.no]);
   return {
     lat: Number(point[1].toFixed(decimals)),
@@ -40,13 +61,7 @@ export function toLatLng(
  * @param defKey - The key within `proj4Options.defs` that identifies the projection definition string to use for the conversion (e.g. `'EPSG:27700'`).
  * @returns An `EastingNorthing` object containing the converted easting and northing values in metres, rounded to the specified number of decimal places.
  */
-export function fromLatLng(
-  coordinates: LatLng,
-  decimals: number,
-  proj4Options: Proj4Options,
-  defKey: keyof Proj4Options['defs']
-): EastingNorthing {
-  proj4.defs('EPSG:27700', proj4Options.defs[defKey]);
+export function fromLatLng(coordinates: LatLng, decimals: number): EastingNorthing {
   const point = proj4('EPSG:4326', 'EPSG:27700', [coordinates.lng, coordinates.lat]);
   return {
     ea: Number(point[0].toFixed(decimals)),

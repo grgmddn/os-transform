@@ -1,10 +1,13 @@
 import * as d3 from 'd3';
 import * as turf from '@turf/turf';
-import { Transform } from '../../dist/index.cjs';
+import { Transform, TransformOptions } from '@grgmddn/os-transform';
 
 import type { FeatureCollection, Feature } from 'geojson';
 
-// Transform.options.type = 'ostn15-cgi'; -- DEFAULT
+const options: TransformOptions = {
+  mode: 'ostn15-cgi',
+  cgiPath: '/cgi-bin/giqtrans'
+};
 
 const roundUp = function (num: number | string, precision: number = 1000): number {
   return Math.ceil(parseFloat(num as string) / precision) * precision;
@@ -24,7 +27,7 @@ function rewind(geo: FeatureCollection): FeatureCollection {
   return fixedGeoJSON;
 }
 
-d3.json('boundary.geojson').then((data: unknown) => {
+d3.json('boundary.geojson').then(async (data: unknown) => {
   /* Cast the response as 'FeatureCollection'. */
   let geojson = data as FeatureCollection;
 
@@ -57,6 +60,12 @@ d3.json('boundary.geojson').then((data: unknown) => {
     .attr('d', path)
     .attr('fill', 'steelblue')
     .attr('stroke', 'white');
+
+  /**
+   * Configure the Transform module:
+   * - sets the mode to 'ostn15-cgi'
+   */
+  await Transform.configure(options);
 
   const element = <HTMLPreElement>document.querySelector('#geojson pre');
 
@@ -94,7 +103,7 @@ d3.json('boundary.geojson').then((data: unknown) => {
         }
       }
 
-      const pre = <HTMLPreElement>document.querySelector(`#${Transform.options.type} pre`);
+      const pre = <HTMLPreElement>document.querySelector(`#${options.mode} pre`);
       pre.innerText = `KM Grid References (for BBOX Extent):\n${JSON.stringify(arrGridRef)}`;
       pre.className = 'msg';
     });
