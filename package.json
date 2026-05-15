@@ -1,6 +1,6 @@
 {
   "name": "@grgmddn/os-transform",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "TypeScript port of OrdnanceSurvey/os-transform",
   "license": "MIT",
   "contributors": [
@@ -14,16 +14,6 @@
     "node": ">=22.0.0"
   },
   "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -72,5 +62,15 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/grgmddn/os-transform.git"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
   }
 }
